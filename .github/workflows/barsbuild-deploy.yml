@@ -1,5 +1,5 @@
 # BarsBuild Auto-Deploy Workflow
-# Automatically deploys to liron-yoga-studio.barsbuild.me on every push
+# Automatically deploys to liron-yoga-studio1.barsbuild.me on every push
 
 name: Deploy to BarsBuild
 
@@ -48,10 +48,10 @@ jobs:
 
       - name: Deploy to BarsBuild
         env:
-          BARSBUILD_TOKEN: "bb_4d2300f2d1d3571c9f4db69d42e39cf4bda3e494c0d3c0853ae6d047f0b29045"
+          BARSBUILD_TOKEN: "bb_1f1de1642ac1fea6933d0949a5331b87006a260d4513884393a59ad73553fe88"
         run: |
           jq -n \
-            --arg subdomain "liron-yoga-studio" \
+            --arg subdomain "liron-yoga-studio1" \
             --rawfile html dist/index.html \
             --arg title "$GITHUB_REPOSITORY" \
             --arg repoUrl "https://github.com/$GITHUB_REPOSITORY" \
@@ -65,7 +65,7 @@ jobs:
           
           cat response.txt
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-            echo "✅ Deployed to https://liron-yoga-studio.barsbuild.me"
+            echo "✅ Deployed to https://liron-yoga-studio1.barsbuild.me"
           else
             echo "❌ Deploy failed with status $HTTP_CODE"
             exit 1
