@@ -48,7 +48,7 @@ jobs:
 
       - name: Deploy to BarsBuild
         env:
-          BARSBUILD_TOKEN: "bb_aca3a611f374bfca8e02c37c0f486c1fa6352199d470fb0dfe6acb93ee1f8a2b"
+          BARSBUILD_TOKEN: "bb_4d2300f2d1d3571c9f4db69d42e39cf4bda3e494c0d3c0853ae6d047f0b29045"
         run: |
           jq -n \
             --arg subdomain "liron-yoga-studio" \
