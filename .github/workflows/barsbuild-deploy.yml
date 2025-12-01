@@ -1,0 +1,73 @@
+# BarsBuild Auto-Deploy Workflow
+# Automatically deploys to liron-yoga-studio.barsbuild.me on every push
+
+name: Deploy to BarsBuild
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+          # Install singlefile plugin for inline build
+          npm install vite-plugin-singlefile --save-dev
+
+      - name: Build
+        run: |
+          # Create singlefile vite config
+          cat > vite.config.singlefile.mjs << 'EOF'
+          import { defineConfig } from 'vite';
+          import react from '@vitejs/plugin-react';
+          import { viteSingleFile } from 'vite-plugin-singlefile';
+          export default defineConfig({
+            plugins: [react(), viteSingleFile()],
+            build: { cssCodeSplit: false, assetsInlineLimit: 100000000 }
+          });
+          EOF
+          npx vite build --config vite.config.singlefile.mjs
+          echo "Build size: $(wc -c < dist/index.html) bytes"
+
+      - name: Deploy to BarsBuild
+        env:
+          BARSBUILD_TOKEN: "bb_aca3a611f374bfca8e02c37c0f486c1fa6352199d470fb0dfe6acb93ee1f8a2b"
+        run: |
+          jq -n \
+            --arg subdomain "liron-yoga-studio" \
+            --rawfile html dist/index.html \
+            --arg title "$GITHUB_REPOSITORY" \
+            --arg repoUrl "https://github.com/$GITHUB_REPOSITORY" \
+            '{subdomain: $subdomain, html: $html, title: $title, repoUrl: $repoUrl}' > payload.json
+          
+          HTTP_CODE=$(curl -s --location-trusted -o response.txt -w "%{http_code}" \
+            -X POST "https://barsbuild.me/api/deploy" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer $BARSBUILD_TOKEN" \
+            -d @payload.json)
+          
+          cat response.txt
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Deployed to https://liron-yoga-studio.barsbuild.me"
+          else
+            echo "❌ Deploy failed with status $HTTP_CODE"
+            exit 1
+          fi
+
